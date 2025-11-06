@@ -1,3 +1,45 @@
+
+
+# Myg Chess Game
+
+
+### Getting the code
+
+```smalltalk
+Metacello new
+	repository: 'github://UnivLille-Meta/Chess:main';
+	baseline: 'MygChess';
+	onConflictUseLoaded;
+	load.
+```
+
+### Using it
+
+```smalltalk
+board := MyChessGame freshGame.
+board size: 800@600.
+space := BlSpace new.
+space root addChild: board.
+space pulse.
+space resizable: true.
+space show.
+```
+# Task - Sofia Demchuk and Yuliia Los
+
+## Game Replay
+
+**Goal:** Practice refactoring and debugging
+
+A common practice between chess players is to study old games.
+Fortunately, many old games exist digitalized in PGN format, and the engine has initial support for it!
+You have to implement a replay feature, where a game is imported and the player move the game forward/backwards given the list of moves.
+As any *crazy* feature, the original developer (Guille P) did not prepare the engine for this.
+But you can do it.
+
+Questions and ideas that can help you in the process:
+- How should you extend the UI to implement this feature?
+- What would happen if the PGN support is not complete/perfect? How can you manage to improve it?
+
 # **2. Initial Situation**
 
 At the beginning of this task, the project already contained a functional chess engine and a basic visual board implemented with Bloc and Toplo. The core game logic — including piece movement, turns, and basic rule validation — was already present and working correctly for manual play.
