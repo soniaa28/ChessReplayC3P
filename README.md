@@ -40,7 +40,7 @@ Questions and ideas that can help you in the process:
 - How should you extend the UI to implement this feature?
 - What would happen if the PGN support is not complete/perfect? How can you manage to improve it?
 
-# **2. Initial Situation**
+# Initial Situation
 
 At the beginning of this task, the project already contained a functional chess engine and a basic visual board implemented with Bloc and Toplo. The core game logic — including piece movement, turns, and basic rule validation — was already present and working correctly for manual play.
 
@@ -52,7 +52,7 @@ The user interface also lacked separation between different interaction modes. I
 
 Before starting the implementation, we had to spend time understanding the existing codebase — its structure, class hierarchy, and interaction between the model and UI. This deep analysis was essential for identifying where to integrate the new functionality. It also helped us build a stronger mental model of the project’s architecture, which made it much easier to refactor and extend the existing code later on.
 
-# **3. Refactoring and Implementation Tasks**
+# Refactoring and Implementation Tasks
 
 When implementing the Game Replay feature, the most important step was refactoring the existing codebase to make it modular and extendable.To support the new functionality, we had to restructure several parts of the system — mainly the MyChessGame class and the UI initialization logic.
 
@@ -184,7 +184,7 @@ MyChessGame >> buildReplayButtons
 		whenClickedDo: [ self replayNext ]).
 	self addChild: controlPane.
 ```
-# **Challenges and Limitations**
+# Challenges and Limitations
 
 During the development of the replay feature, several technical and design difficulties appeared.
 Some of them were expected (like missing parser features), while others came from how the game state was originally implemented.
