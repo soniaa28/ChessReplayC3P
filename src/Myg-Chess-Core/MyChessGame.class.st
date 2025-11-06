@@ -30,7 +30,8 @@ Class {
 		'replayMoves',
 		'currentMoveIndex',
 		'replayIndex',
-		'replayString'
+		'replayString',
+		'lastReplayPGN'
 	],
 	#category : 'Myg-Chess-Core',
 	#package : 'Myg-Chess-Core'
@@ -51,9 +52,81 @@ MyChessGame class >> fromFENString: aFENString [
 ]
 
 { #category : 'instance creation' }
+MyChessGame class >> fromPGNString: aString [ [
+	^ super new
+		initializeFromPGN: (MyPGNParser forString: (self normalizeToPGN: aString));
+		yourself
+]
+]
+
+{ #category : 'instance creation' }
 MyChessGame class >> new [
 	
 	self error: 'Please use one of the other constructors'
+]
+
+{ #category : 'instance creation' }
+MyChessGame class >> normalizeToPGN: aString [
+	| txt trimmed movesOnly resultToken |
+	txt := (aString ifNil: ['']) asString.
+
+	"Если это уже полноценный PGN (есть теги) — отдаем как есть"
+	(txt includes: $[) ifTrue: [ ^ txt ].
+
+	trimmed := txt trimBoth.
+	"Если пользователь дописал результат — оставим, иначе подставим '1-0'"
+	(#('1-0' '0-1' '1/2-1/2')
+		detect: [:r | trimmed endsWith: r]
+		ifNone: [ nil ])
+		ifNil: [
+			movesOnly := trimmed.
+			resultToken := '1-0'  "можешь сменить на '0-1' или '1/2-1/2' по вкусу"
+		]
+		ifNotNil: [:r |
+			movesOnly := (trimmed copyFrom: 1 to: trimmed size - r size) trimRight.
+			resultToken := r
+		].
+
+	^ String streamContents: [:s |
+		s nextPutAll: '[Event "Manual"]'; cr.
+		s nextPutAll: '[Site "Local"]'; cr.
+		s nextPutAll: '[Date "????.??.??"]'; cr.
+		s nextPutAll: '[Round "-"]'; cr.
+		s nextPutAll: '[White "White"]'; cr.
+		s nextPutAll: '[Black "Black"]'; cr.
+		s nextPutAll: '[Result "*"]'; cr; cr.
+		s nextPutAll: movesOnly; space; nextPutAll: resultToken ]
+]
+
+{ #category : 'instance creation' }
+MyChessGame class >> stripTrailingResultFrom: aString [
+	| t res |
+	t := aString trimRight.
+	res := (#('1-0' '0-1' '1/2-1/2' '*')
+		detect: [ :r | t endsWith: r ]
+		ifNone: [ nil ]).
+	res ifNil: [ ^ t ].
+	^ (t copyFrom: 1 to: t size - res size) trimRight
+]
+
+{ #category : 'instance creation' }
+MyChessGame >> askAndLoadReplay [
+	| input pgn |
+	input := UIManager default
+		request: 'Paste PGN or SAN (e.g., "1. e4 e5 2. Nf3 Nc6")'
+		initialAnswer: ''.
+	input ifNil: [ ^ self ].  "Отмена"
+
+	pgn := self class normalizeToPGN: input.
+	self initializeFromPGN: (MyPGNParser forString: pgn).
+
+	"сначала убеждаемся, что у доски корректная сетка 8×8"
+	self ensureGrid8x8.
+
+	"если хочешь стартовую позицию — закомментируй строку ниже"
+	self toEndOfReplay.
+
+	self space ifNotNil: [ self space pulse ].
 ]
 
 { #category : 'playing' }
@@ -61,6 +134,24 @@ MyChessGame >> checkForMate [
 
 	whitePlayer king isCheckMated ifTrue: [ self halt: 'Black wins!' ].
 	blackPlayer king isCheckMated ifTrue: [ self halt: 'White wins!' ].
+]
+
+{ #category : 'as yet unclassified' }
+MyChessGame >> ensureGrid8x8 [ [
+	| grid |
+	grid := self layout.
+	grid isNil ifTrue: [
+		self layout: BlGridLayout new.
+		grid := self layout ].
+
+	(grid isKindOf: BlGridLayout) ifFalse: [
+		self layout: BlGridLayout new.
+		grid := self layout ].
+
+	grid
+		columnCount: 8;
+		rowCount: 8.
+]
 ]
 
 { #category : 'initialization' }
@@ -287,6 +378,11 @@ MyChessGame >> recordMovementOf: aPiece to: aSquare [
 	movesLabel text: tableText
 ]
 
+{ #category : 'instance creation' }
+MyChessGame >> replayMoves [
+	^ replayMoves ifNil: [ #() ]
+]
+
 { #category : 'as yet unclassified' }
 MyChessGame >> replayNext [
 
@@ -328,4 +424,11 @@ MyChessGame >> replayPrevious [
 	newIndex := replayIndex - 1.
 	self initializeFromPGN: (MyPGNParser forString: replayString).
 	1 to: newIndex do: [ :i | self replayNext ]
+]
+
+{ #category : 'instance creation' }
+MyChessGame >> toEndOfReplay [
+	"Проигрывает все ходы, чтобы оказаться в конце партии"
+	1 to: (self replayMoves size) do: [ :i |
+		self replayNext ].
 ]
