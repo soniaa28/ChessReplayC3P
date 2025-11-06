@@ -228,3 +228,77 @@ UIManager default chooseFileMatching: '*.pgn'
 Unfortunately, such functionality is not working reliably in Pharo 12.The dialog either did not open or returned invalid file references in the Bloc environment.
 Because of that, the replay system currently uses a hardcoded PGN example stored directly in the method startReplay,
 or alternatively prompts the user for text input through a simple multiline dialog.
+
+
+# Testing
+
+The testing system ensures that the **chess replay functionality** works correctly and remains stable.  
+It validates move parsing, replay logic, PGN normalization, and deterministic board behavior.
+
+Setup:
+
+```smalltalk
+MyChessReplayTest >> setUp
+    originalPGN := '[Event "Unit"] [Site "Local"] [Date "2025.01.01"] [Round "-"] [White "W"] [Black "B"] [Result "*"]
+1. e4+ e5?! 2. Nf3 Nc6 3. Bb5+ a6 4. Ba4? Nf6 O-O Be7 6. Re1! b5 7. Bb3 d6 8. c3 O-O 9. h3 *'.
+
+    normalizedPGN := '1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 O-O Be7 6. Re1 b5 7. Bb3 d6 8. c3 O-O 9. h3'.
+
+    replay := MyChessReplay new.
+```
+Examples: 
+
+**testInitializeFromPGN_FillsReplayMoves**
+```smalltalk
+testInitializeFromPGN_FillsReplayMoves
+    game initializeFromPGN: (MyPGNParser forString: pgnSimple).
+    self assert: game replayMoves size = 40.
+    self assert: r atStart
+```
+Verifies that when a game is initialized from a valid PGN string, the replay system correctly fills the list of all 40 half-moves.
+
+**testNormalizeToPGN_AddsDefaultResult**
+```smalltalk
+testNormalizeToPGN_AddsDefaultResult
+    | out |
+    out := MyChessGame normalizeToPGN: '1. e4 e5'.
+    self assert: (out includesSubstring: '[Event "Manual"]').
+    self assert: (out endsWith: '1-0').
+```
+Checks that the PGN normalization process automatically adds missing metadata such as [Event "Manual"] and a default result tag (1-0) when they are absent.
+
+
+**testToEndOfReplay_ReachesEndSafely**
+```smalltalk
+testToEndOfReplay_ReachesEndSafely
+    game initializeFromPGN: (MyPGNParser forString: pgnSimple).
+    game toEndOfReplay.
+    game replayNext.
+    self assert: game replayMoves size = 40.
+```
+Validates that the game can safely reach the end of the replay, and even additional replayNext calls after the last move do not trigger exceptions.
+
+
+# Results
+**Step 1 – Switching to Replay Mode**
+
+When the user chooses Replay mode from the menu, the interface prompts them to enter or paste a PGN string.
+<p align="center">
+<img width="355" height="326" alt="Знімок екрана 2025-11-06 о 22 27 51" src="https://github.com/user-attachments/assets/1dcc9e1c-79e3-4257-9479-0568ae008216" />
+<img width="253" height="77" alt="Знімок екрана 2025-11-06 о 22 28 26" src="https://github.com/user-attachments/assets/8c99b826-c45f-4b57-8058-a6444c505df2" />
+</p>
+
+**Step 2 – Game Loaded**
+
+After pressing “OK”, the board is built according to the PGN data.
+The move list is shown on the right side, and you can navigate through moves step by step.
+<p align="center">
+<img width="362" height="326" alt="Знімок екрана 2025-11-06 о 22 28 43" src="https://github.com/user-attachments/assets/2f8cb654-72f9-46c3-ba1a-47cc78e3e0b6" />
+</p>
+**Step 2 – Navigating through moves**
+
+Using Previous and Next buttons, you can move backward and forward through the recorded game.
+Each click updates both the board and the textual move list.
+<p align="center">
+<img width="489" height="313" alt="Знімок екрана 2025-11-06 о 22 28 54" src="https://github.com/user-attachments/assets/9a1a261f-a7d6-4b36-9846-c3a0bcd0db21" />
+</p>
