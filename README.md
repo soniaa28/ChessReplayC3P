@@ -52,7 +52,7 @@ The user interface also lacked separation between different interaction modes. I
 
 Before starting the implementation, we had to spend time understanding the existing codebase — its structure, class hierarchy, and interaction between the model and UI. This deep analysis was essential for identifying where to integrate the new functionality. It also helped us build a stronger mental model of the project’s architecture, which made it much easier to refactor and extend the existing code later on.
 
-# Refactoring and Implementation Tasks
+# Refactoring and Implementation Tasks - Sofia
 
 When implementing the Game Replay feature, the most important step was refactoring the existing codebase to make it modular and extendable.To support the new functionality, we had to restructure several parts of the system — mainly the MyChessGame class and the UI initialization logic.
 
@@ -105,7 +105,7 @@ MyChessGame >> initializeModeMenu
 			mode := #replay.
 			self buildReplayButtons.
 			lastReplayPGN
-				ifNil: [ self askAndLoadReplay ]
+				ifNil: [ self askAndLoadReplay ] //for correct working
 				ifNotNil: [
 					self initializeFromPGN: (MyPGNParser forString: lastReplayPGN).
 					self toEndOfReplay.
@@ -152,7 +152,6 @@ MyChessGame >> replayPrevious
 MyChessGame >> toEndOfReplay
 	1 to: (self replayMoves size) do: [ :i | self replayNext ].
 ```
-Introducing Normalization for Unstable PGN Input
 
 The PGN parser often failed on minimal SAN strings like
 1. e4 e5 2. Nf3 Nc6 3. Bb5 a6.
@@ -208,9 +207,7 @@ From a software-engineering point of view, this is a clear trade-off between opt
 Unrecognized PGN Symbols and Special Moves
 
 Another challenge came from the PGN notation itself.
-When testing real PGN examples or even the sample data inside MyPGNParser, the parser encountered several tokens that were not supported by the base implementation — such as:
-	•	O-O or O-O-O (castling),
-	•	moves with checks, like Qh5+ or Re1+.
+When testing real PGN examples or even the sample data inside MyPGNParser, the parser encountered several tokens that were not supported by the base implementation — such as:O-O or O-O-O (castling),moves with checks, like Qh5+ or Re1+.
 
 The original code was not able to recognize or process these tokens, which caused the parser to stop or raise an exception.
 I tried to extend the parser to handle castling moves, but it turned out to be quite complex — it required modifying both the token parser and the move generator to update both the king and rook positions simultaneously.
@@ -230,7 +227,7 @@ Because of that, the replay system currently uses a hardcoded PGN example stored
 or alternatively prompts the user for text input through a simple multiline dialog.
 
 
-# Testing
+# Testing - Julia
 
 The testing system ensures that the **chess replay functionality** works correctly and remains stable.  
 It validates move parsing, replay logic, PGN normalization, and deterministic board behavior.
@@ -302,3 +299,18 @@ Each click updates both the board and the textual move list.
 <p align="center">
 <img width="489" height="313" alt="Знімок екрана 2025-11-06 о 22 28 54" src="https://github.com/user-attachments/assets/9a1a261f-a7d6-4b36-9846-c3a0bcd0db21" />
 </p>
+
+# Conclusion
+
+The replay feature extends the original chess engine into a more complete, interactive application.
+Through systematic refactoring, we separated gameplay and replay logic, introduced a cleaner UI structure, and improved PGN parsing to handle real-world data.
+
+During development, we focused on debugging stability — fixing missing parser methods, improving replay navigation, and ensuring the system behaves safely even at boundaries.
+Although some optimizations (like faster backward navigation, castling, or promotion support) remain incomplete, the implemented version works reliably and demonstrates the core functionality of the replay system.
+
+We fully understand that the task is not implemented as perfectly or completely as we originally imagined, but the process itself was extremely valuable.
+Throughout this work, we learned how to read and extend existing code, refactor a complex UI-driven system, and design meaningful tests to ensure program stability.
+
+Overall, this project was a great opportunity to practice real software engineering skills — refactoring, debugging, testing, and understanding large-scale Pharo codebases in a practical context.
+
+
